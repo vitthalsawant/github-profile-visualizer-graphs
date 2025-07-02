@@ -2,78 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GitHub Profile Generator Design System - Modern tech theme with vibrant colors */
+/* GitHub Profile Generator Design System - Professional White/Black Theme */
 
 @layer base {
   :root {
-    /* Background gradients for modern feel */
-    --background: 220 26% 14%;
-    --background-secondary: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Professional background system */
+    --background: 0 0% 100%;
+    --background-secondary: 0 0% 98%;
+    --foreground: 0 0% 3%;
 
-    /* Card system with glass morphism */
-    --card: 220 26% 18%;
-    --card-secondary: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
-    --card-border: 217 19% 27%;
+    /* Card system with clean shadows */
+    --card: 0 0% 100%;
+    --card-secondary: 0 0% 97%;
+    --card-foreground: 0 0% 3%;
+    --card-border: 0 0% 90%;
 
-    --popover: 220 26% 18%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3%;
 
-    /* Primary brand colors - GitHub inspired with modern twist */
-    --primary: 240 100% 70%;
-    --primary-hover: 240 100% 75%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary accent - Professional orange */
+    --primary: 25 95% 53%;
+    --primary-hover: 25 95% 48%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary accent - complementary purple */
-    --secondary: 280 100% 70%;
-    --secondary-hover: 280 100% 75%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary accent - Professional gray */
+    --secondary: 0 0% 96%;
+    --secondary-hover: 0 0% 90%;
+    --secondary-foreground: 0 0% 9%;
 
     /* Success/positive actions */
     --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
+    --success-foreground: 0 0% 100%;
 
     /* Muted elements */
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
     /* Interactive elements */
-    --accent: 240 100% 70%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Form elements */
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --input-focus: 240 100% 70%;
-    --ring: 240 100% 70%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 25 95% 53%;
 
     /* Chart colors for data visualization */
-    --chart-1: 240 100% 70%;
-    --chart-2: 280 100% 70%;
-    --chart-3: 142 76% 36%;
-    --chart-4: 38 92% 50%;
+    --chart-1: 25 95% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 221 83% 53%;
+    --chart-4: 262 83% 58%;
     --chart-5: 0 84% 60%;
-    --chart-6: 200 100% 70%;
+    --chart-6: 200 98% 39%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(240 100% 70%), hsl(280 100% 70%));
-    --gradient-card: linear-gradient(135deg, hsl(220 26% 18% / 0.8), hsl(222 47% 15% / 0.9));
-    --gradient-hero: linear-gradient(135deg, hsl(220 26% 14%), hsl(222 47% 11%));
+    /* Professional gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 95% 48%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 98%));
 
-    /* Shadows and effects */
-    --shadow-glow: 0 0 40px hsl(240 100% 70% / 0.3);
-    --shadow-card: 0 8px 32px hsl(220 26% 14% / 0.6);
-    --shadow-elevated: 0 16px 64px hsl(220 26% 14% / 0.8);
+    /* Clean shadows */
+    --shadow-glow: 0 0 20px hsl(25 95% 53% / 0.3);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.1);
+    --shadow-elevated: 0 4px 16px hsl(0 0% 0% / 0.15);
 
     /* Animation transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --radius: 0.75rem;
+    /* Streak animation */
+    --streak-glow: 0 0 30px hsl(25 95% 53% / 0.5);
+    
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -138,5 +140,45 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Streak indicator animation */
+  .streak-circle {
+    @apply relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-primary bg-background;
+    box-shadow: var(--streak-glow);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .streak-number {
+    @apply text-2xl font-bold text-primary;
+  }
+  
+  .streak-label {
+    @apply text-sm font-medium text-muted-foreground mt-2;
+  }
+  
+  /* Pulse animation for streak indicators */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: var(--streak-glow);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(25 95% 53% / 0.6);
+      transform: scale(1.05);
+    }
+  }
+  
+  /* Stats card animation */
+  .stats-card {
+    @apply bg-card border border-card-border rounded-lg p-6 transition-all duration-300;
+    box-shadow: var(--shadow-card);
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
   }
 }

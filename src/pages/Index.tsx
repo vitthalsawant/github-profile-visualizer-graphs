@@ -115,7 +115,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background-secondary to-background">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {!user ? (
           <div className="max-w-2xl mx-auto">
