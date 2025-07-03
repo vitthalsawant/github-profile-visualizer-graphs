@@ -2,6 +2,7 @@ import { GitHubProfileForm } from "@/components/GitHubProfileForm";
 import { ProfileSummary } from "@/components/ProfileSummary";
 import { RepositoryList } from "@/components/RepositoryList";
 import { AdvancedAnalytics } from "@/components/AdvancedAnalytics";
+import { ContributionHeatmap } from "@/components/ContributionHeatmap";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useGitHubAPI } from "@/hooks/useGitHubAPI";
@@ -31,6 +32,7 @@ const Index = () => {
             </div>
             
             <ProfileSummary user={user} stats={stats} />
+            <ContributionHeatmap totalContributions={stats.analytics.commitFrequency * 10 + stats.totalStars} />
             <AdvancedAnalytics analytics={stats.analytics} />
             <RepositoryList repositories={repositories} />
           </div>
