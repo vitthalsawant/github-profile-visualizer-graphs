@@ -59,8 +59,7 @@ This project helps users visualize their GitHub profile data through interactive
 ## 🤝 Contributing
 Contributions are welcome! Please open issues or pull requests for improvements, bug fixes, or new features.
 
-## 📄 License
-[MIT](LICENSE)
+
 
 ## 📬 Contact
 For questions or feedback, open an issue or reach out via GitHub.
