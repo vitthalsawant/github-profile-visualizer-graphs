@@ -34,6 +34,19 @@ interface Repository {
   open_issues_count: number;
 }
 
+interface AdvancedAnalytics {
+  avgCommitMessageLength: number;
+  commitFrequency: number;
+  issuesOpened: number;
+  issuesClosed: number;
+  pullRequestsCreated: number;
+  pullRequestsMerged: number;
+  hasCI: boolean;
+  hasTests: boolean;
+  languageDiversity: number;
+  codeQualityScore: number;
+}
+
 interface GitHubStats {
   totalStars: number;
   totalForks: number;
@@ -42,12 +55,26 @@ interface GitHubStats {
   contributionStreak: number;
   topRepo: Repository | null;
   techStack: string[];
+  analytics: AdvancedAnalytics;
 }
 
 export const useGitHubAPI = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
+  const defaultAnalytics: AdvancedAnalytics = {
+    avgCommitMessageLength: 0,
+    commitFrequency: 0,
+    issuesOpened: 0,
+    issuesClosed: 0,
+    pullRequestsCreated: 0,
+    pullRequestsMerged: 0,
+    hasCI: false,
+    hasTests: false,
+    languageDiversity: 0,
+    codeQualityScore: 0
+  };
+
   const [stats, setStats] = useState<GitHubStats>({
     totalStars: 0,
     totalForks: 0,
@@ -55,7 +82,8 @@ export const useGitHubAPI = () => {
     totalCommits: 0,
     contributionStreak: 0,
     topRepo: null,
-    techStack: []
+    techStack: [],
+    analytics: defaultAnalytics
   });
   const { toast } = useToast();
 
@@ -93,6 +121,18 @@ export const useGitHubAPI = () => {
         console.warn('Could not fetch events data:', error);
       }
 
+      // Fetch advanced analytics data
+      let issuesData = [];
+      let pullsData = [];
+      try {
+        [issuesData, pullsData] = await Promise.all([
+          callGitHubAPI(username, 'issues'),
+          callGitHubAPI(username, 'pulls')
+        ]);
+      } catch (error) {
+        console.warn('Could not fetch issues/PRs data:', error);
+      }
+
       // Calculate enhanced stats
       const totalStars = reposData.reduce((sum: number, repo: Repository) => sum + repo.stargazers_count, 0);
       const totalForks = reposData.reduce((sum: number, repo: Repository) => sum + repo.forks_count, 0);
@@ -111,6 +151,39 @@ export const useGitHubAPI = () => {
         return sum + (event.payload?.commits?.length || 0);
       }, 0);
 
+      // Calculate advanced analytics
+      const commitMessages = pushEvents.flatMap((event: any) => 
+        event.payload?.commits?.map((commit: any) => commit.message) || []
+      );
+      const avgCommitMessageLength = commitMessages.length > 0 
+        ? Math.round(commitMessages.reduce((sum: number, msg: string) => sum + msg.length, 0) / commitMessages.length)
+        : 0;
+
+      const commitFrequency = pushEvents.length;
+      const issuesOpened = (issuesData as any)?.total_count || 0;
+      const issuesClosed = (issuesData as any)?.items?.filter((issue: any) => issue.state === 'closed').length || 0;
+      const pullRequestsCreated = (pullsData as any)?.total_count || 0;
+      const pullRequestsMerged = (pullsData as any)?.items?.filter((pr: any) => pr.state === 'closed' && pr.pull_request?.merged_at).length || 0;
+
+      // Check for CI/CD and testing
+      const hasCI = reposData.some((repo: Repository) => 
+        repo.topics?.some((topic: string) => 
+          ['ci', 'cd', 'github-actions', 'travis', 'jenkins', 'circleci'].includes(topic.toLowerCase())
+        )
+      );
+      
+      const hasTests = reposData.some((repo: Repository) => 
+        repo.topics?.some((topic: string) => 
+          ['testing', 'jest', 'mocha', 'cypress', 'test'].includes(topic.toLowerCase())
+        )
+      );
+
+      const languageDiversity = Object.keys(languages).length;
+      const codeQualityScore = Math.min(
+        Math.round((totalStars * 0.3 + pullRequestsMerged * 0.4 + languageDiversity * 0.3) / 10),
+        100
+      );
+
       // Calculate contribution streak (simplified)
       const recentActivity = pushEvents.length;
       const contributionStreak = Math.min(recentActivity * 2 + Math.floor(totalStars / 10), 99);
@@ -128,6 +201,19 @@ export const useGitHubAPI = () => {
       const topLanguages = Object.keys(languages).slice(0, 5);
       const techStack = [...new Set([...topLanguages, ...allTopics.slice(0, 10)])];
 
+      const analytics: AdvancedAnalytics = {
+        avgCommitMessageLength,
+        commitFrequency,
+        issuesOpened,
+        issuesClosed,
+        pullRequestsCreated,
+        pullRequestsMerged,
+        hasCI,
+        hasTests,
+        languageDiversity,
+        codeQualityScore
+      };
+
       const enhancedStats = {
         totalStars,
         totalForks,
@@ -135,7 +221,8 @@ export const useGitHubAPI = () => {
         totalCommits: estimatedCommits,
         contributionStreak,
         topRepo,
-        techStack: techStack.slice(0, 8)
+        techStack: techStack.slice(0, 8),
+        analytics
       };
       
       setUser(userData);
@@ -169,7 +256,8 @@ export const useGitHubAPI = () => {
       totalCommits: 0,
       contributionStreak: 0,
       topRepo: null,
-      techStack: []
+      techStack: [],
+      analytics: defaultAnalytics
     });
   };
 

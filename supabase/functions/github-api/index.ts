@@ -11,7 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { username, endpoint = 'user' } = await req.json()
+    const body = await req.json()
+    const { username, endpoint = 'user' } = body
     
     if (!username) {
       throw new Error('Username is required')
@@ -32,6 +33,22 @@ serve(async (req) => {
         break
       case 'events':
         apiUrl = `https://api.github.com/users/${username}/events/public?per_page=100`
+        break
+      case 'commits':
+        const { repo } = body
+        if (!repo) throw new Error('Repository name required for commits endpoint')
+        apiUrl = `https://api.github.com/repos/${username}/${repo}/commits?per_page=100`
+        break
+      case 'issues':
+        apiUrl = `https://api.github.com/search/issues?q=author:${username}+type:issue&per_page=100`
+        break
+      case 'pulls':
+        apiUrl = `https://api.github.com/search/issues?q=author:${username}+type:pr&per_page=100`
+        break
+      case 'languages':
+        const { repoName } = body
+        if (!repoName) throw new Error('Repository name required for languages endpoint')
+        apiUrl = `https://api.github.com/repos/${username}/${repoName}/languages`
         break
       default:
         throw new Error('Invalid endpoint')
