@@ -10,12 +10,16 @@ import { useGitHubAPI } from "@/hooks/useGitHubAPI";
 const Index = () => {
   const { loading, user, repositories, stats, fetchGitHubData, resetData } = useGitHubAPI();
 
+  const handleFormSubmit = (username: string, originalUrl: string) => {
+    fetchGitHubData(username, originalUrl);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {!user ? (
           <div className="max-w-2xl mx-auto">
-            <GitHubProfileForm onSubmit={fetchGitHubData} loading={loading} />
+            <GitHubProfileForm onSubmit={handleFormSubmit} loading={loading} />
           </div>
         ) : (
           <div className="space-y-8">

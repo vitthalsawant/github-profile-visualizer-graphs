@@ -9,7 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      github_searches: {
+        Row: {
+          created_at: string
+          github_url: string
+          github_username: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          github_url: string
+          github_username: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          github_url?: string
+          github_username?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -6,7 +6,7 @@ import { Github, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface GitHubProfileFormProps {
-  onSubmit: (username: string) => void;
+  onSubmit: (username: string, originalUrl: string) => void;
   loading: boolean;
 }
 
@@ -53,7 +53,7 @@ export const GitHubProfileForm = ({ onSubmit, loading }: GitHubProfileFormProps)
       return;
     }
     
-    onSubmit(username);
+    onSubmit(username, url);
   };
 
   return (

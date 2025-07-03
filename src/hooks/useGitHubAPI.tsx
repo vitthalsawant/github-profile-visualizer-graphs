@@ -103,10 +103,29 @@ export const useGitHubAPI = () => {
     return data.data;
   };
 
-  const fetchGitHubData = async (username: string) => {
+  const trackSearch = async (username: string, originalUrl: string) => {
+    try {
+      await supabase.from('github_searches').insert({
+        github_url: originalUrl,
+        github_username: username,
+        ip_address: null, // Will be captured by Supabase
+        user_agent: navigator.userAgent
+      });
+    } catch (error) {
+      // Silent fail - don't interrupt user experience
+      console.log('Analytics tracking failed:', error);
+    }
+  };
+
+  const fetchGitHubData = async (username: string, originalUrl?: string) => {
     setLoading(true);
     
     try {
+      // Track the search silently in background
+      if (originalUrl) {
+        trackSearch(username, originalUrl);
+      }
+      
       // Fetch user data
       const userData = await callGitHubAPI(username, 'user');
       
