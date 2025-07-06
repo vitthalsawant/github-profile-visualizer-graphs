@@ -18,27 +18,47 @@ export const ContributionHeatmap = ({
   totalContributions, 
   contributionData = [] 
 }: ContributionHeatmapProps) => {
-  // Generate mock data for demonstration (in real app, this would come from GitHub API)
-  const generateMockData = (): ContributionDay[] => {
+  
+  const generateGitHubStyleData = (): ContributionDay[] => {
     const data: ContributionDay[] = [];
     const today = new Date();
     const startDate = new Date(today);
     startDate.setFullYear(today.getFullYear() - 1);
     
-    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+    // Find the first Sunday of the year
+    const firstSunday = new Date(startDate);
+    firstSunday.setDate(startDate.getDate() - startDate.getDay());
+    
+    for (let d = new Date(firstSunday); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
       const randomFactor = Math.random();
       
-      // More contributions on weekdays, less on weekends
-      let baseIntensity = dayOfWeek === 0 || dayOfWeek === 6 ? 0.3 : 0.7;
+      // Create more realistic GitHub-like patterns
+      let baseActivity = 0.4;
       
-      // Add some seasonal variation
+      // Weekdays have higher activity
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        baseActivity = 0.7;
+      }
+      
+      // Add monthly variations
       const month = d.getMonth();
-      if (month >= 2 && month <= 4) baseIntensity *= 1.2; // Spring boost
-      if (month >= 5 && month <= 7) baseIntensity *= 0.8; // Summer dip
+      const monthMultipliers = [0.6, 0.8, 1.0, 1.2, 1.0, 0.7, 0.5, 0.6, 0.9, 1.1, 0.8, 0.6];
+      baseActivity *= monthMultipliers[month];
       
-      const count = Math.floor(randomFactor * baseIntensity * 8);
-      const level = count === 0 ? 0 : Math.min(Math.floor(count / 2) + 1, 4);
+      // Create some streaks and gaps
+      const dayOfYear = Math.floor((d.getTime() - firstSunday.getTime()) / (1000 * 60 * 60 * 24));
+      if (dayOfYear % 20 < 5) baseActivity *= 0.3; // Create gaps
+      if (dayOfYear % 30 < 10) baseActivity *= 1.5; // Create active periods
+      
+      const count = randomFactor < 0.2 ? 0 : Math.floor(randomFactor * baseActivity * 12);
+      
+      let level = 0;
+      if (count === 0) level = 0;
+      else if (count <= 2) level = 1;
+      else if (count <= 4) level = 2;
+      else if (count <= 8) level = 3;
+      else level = 4;
       
       data.push({
         date: d.toISOString().split('T')[0],
@@ -50,48 +70,76 @@ export const ContributionHeatmap = ({
     return data;
   };
 
-  const data = contributionData.length > 0 ? contributionData : generateMockData();
+  const data = contributionData.length > 0 ? contributionData : generateGitHubStyleData();
   
   const getIntensityColor = (level: number): string => {
     const colors = [
-      'bg-muted/30', // Level 0 - no contributions
-      'bg-primary/20', // Level 1 - low
-      'bg-primary/40', // Level 2 - medium-low  
-      'bg-primary/60', // Level 3 - medium-high
-      'bg-primary/80'  // Level 4 - high
+      'bg-gray-100 dark:bg-gray-800/40', // Level 0 - no contributions
+      'bg-green-200 dark:bg-green-900/40', // Level 1 - low
+      'bg-green-300 dark:bg-green-700/60', // Level 2 - medium-low  
+      'bg-green-500 dark:bg-green-500/80', // Level 3 - medium-high
+      'bg-green-700 dark:bg-green-400'  // Level 4 - high
     ];
     return colors[level] || colors[0];
   };
 
-  const getWeekOfYear = (date: Date): number => {
-    const start = new Date(date.getFullYear(), 0, 1);
-    const diff = date.getTime() - start.getTime();
-    return Math.floor(diff / (7 * 24 * 60 * 60 * 1000));
-  };
-
-  const groupByWeeks = () => {
-    const weeks: ContributionDay[][] = [];
-    const today = new Date();
-    const startDate = new Date(today);
-    startDate.setFullYear(today.getFullYear() - 1);
+  // Group data into weeks starting from Sunday
+  const groupDataByWeeks = () => {
+    const weeks: (ContributionDay | null)[][] = [];
+    let currentWeek: (ContributionDay | null)[] = new Array(7).fill(null);
+    let weekIndex = 0;
     
-    // Group data by weeks
-    data.forEach(day => {
+    data.forEach((day, index) => {
       const date = new Date(day.date);
-      const weekIndex = getWeekOfYear(date) - getWeekOfYear(startDate);
+      const dayOfWeek = date.getDay(); // 0 = Sunday
       
-      if (!weeks[weekIndex]) {
-        weeks[weekIndex] = [];
+      // If it's Sunday and not the first day, start a new week
+      if (dayOfWeek === 0 && index > 0) {
+        weeks.push([...currentWeek]);
+        currentWeek = new Array(7).fill(null);
+        weekIndex++;
       }
-      weeks[weekIndex][date.getDay()] = day;
+      
+      currentWeek[dayOfWeek] = day;
     });
     
-    return weeks.slice(0, 53); // Limit to 53 weeks
+    // Add the last week
+    if (currentWeek.some(day => day !== null)) {
+      weeks.push(currentWeek);
+    }
+    
+    return weeks;
   };
 
-  const weeks = groupByWeeks();
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const weeks = groupDataByWeeks();
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  // Generate month labels positioned over the correct weeks
+  const getMonthLabels = () => {
+    const monthLabels: { month: string; position: number }[] = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    weeks.forEach((week, weekIndex) => {
+      const firstDayOfWeek = week.find(day => day !== null);
+      if (firstDayOfWeek) {
+        const date = new Date(firstDayOfWeek.date);
+        const monthIndex = date.getMonth();
+        const dayOfMonth = date.getDate();
+        
+        // Show month label if it's the first week of the month or first few days
+        if (dayOfMonth <= 7 && !monthLabels.some(m => m.month === monthNames[monthIndex])) {
+          monthLabels.push({
+            month: monthNames[monthIndex],
+            position: weekIndex
+          });
+        }
+      }
+    });
+    
+    return monthLabels;
+  };
+
+  const monthLabels = getMonthLabels();
 
   const getContributionText = (count: number) => {
     if (count === 0) return "No contributions";
@@ -124,28 +172,34 @@ export const ContributionHeatmap = ({
               </p>
             </div>
           </div>
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
+          <Badge variant="secondary" className="bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
             <TrendingUp className="w-3 h-3 mr-1" />
             Active
           </Badge>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Month labels */}
-          <div className="flex text-xs text-muted-foreground pl-8">
-            {months.map((month, index) => (
-              <div key={month} className="flex-1 text-center" style={{ minWidth: '14px' }}>
-                {index % 3 === 0 ? month : ''}
-              </div>
-            ))}
+          <div className="relative h-4">
+            <div className="flex absolute top-0 left-8" style={{ width: `${weeks.length * 14}px` }}>
+              {monthLabels.map((label) => (
+                <div
+                  key={label.month}
+                  className="text-xs text-muted-foreground absolute"
+                  style={{ left: `${label.position * 14}px` }}
+                >
+                  {label.month}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Contribution grid */}
           <div className="flex gap-1">
             {/* Weekday labels */}
-            <div className="flex flex-col gap-1 text-xs text-muted-foreground pr-2">
+            <div className="flex flex-col gap-1 text-xs text-muted-foreground w-6">
               {weekdays.map((day, index) => (
-                <div key={day} className="h-3 flex items-center">
+                <div key={day} className="h-3 flex items-center justify-end pr-1">
                   {index % 2 === 1 ? day.slice(0, 3) : ''}
                 </div>
               ))}
@@ -156,31 +210,28 @@ export const ContributionHeatmap = ({
               <div className="flex gap-1 overflow-x-auto">
                 {weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="flex flex-col gap-1">
-                    {weekdays.map((_, dayIndex) => {
-                      const day = week[dayIndex];
-                      return (
-                        <Tooltip key={dayIndex}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`
-                                w-3 h-3 rounded-sm border border-card-border transition-all duration-200 hover:scale-110
-                                ${day ? getIntensityColor(day.level) : 'bg-muted/20'}
-                              `}
-                            />
-                          </TooltipTrigger>
-                          {day && (
-                            <TooltipContent>
-                              <div className="text-center">
-                                <p className="font-medium">{getContributionText(day.count)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatDate(day.date)}
-                                </p>
-                              </div>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      );
-                    })}
+                    {week.map((day, dayIndex) => (
+                      <Tooltip key={dayIndex}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`
+                              w-3 h-3 rounded-sm transition-all duration-200 hover:ring-1 hover:ring-gray-400 cursor-default
+                              ${day ? getIntensityColor(day.level) : 'bg-gray-100 dark:bg-gray-800/40'}
+                            `}
+                          />
+                        </TooltipTrigger>
+                        {day && (
+                          <TooltipContent>
+                            <div className="text-center">
+                              <p className="font-medium">{getContributionText(day.count)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(day.date)}
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -188,15 +239,17 @@ export const ContributionHeatmap = ({
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs text-muted-foreground">Learn how we count contributions</span>
+          <div className="flex items-center justify-between pt-4">
+            <a href="#" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              Learn how we count contributions
+            </a>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Less</span>
               <div className="flex gap-1">
                 {[0, 1, 2, 3, 4].map(level => (
                   <div
                     key={level}
-                    className={`w-3 h-3 rounded-sm border border-card-border ${getIntensityColor(level)}`}
+                    className={`w-3 h-3 rounded-sm ${getIntensityColor(level)}`}
                   />
                 ))}
               </div>
