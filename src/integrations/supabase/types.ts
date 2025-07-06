@@ -18,6 +18,7 @@ export type Database = {
           ip_address: string | null
           user_agent: string | null
           user_email: string | null
+          user_name: string | null
         }
         Insert: {
           created_at?: string
@@ -27,6 +28,7 @@ export type Database = {
           ip_address?: string | null
           user_agent?: string | null
           user_email?: string | null
+          user_name?: string | null
         }
         Update: {
           created_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           ip_address?: string | null
           user_agent?: string | null
           user_email?: string | null
+          user_name?: string | null
         }
         Relationships: []
       }

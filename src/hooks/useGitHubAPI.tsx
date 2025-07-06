@@ -103,11 +103,12 @@ export const useGitHubAPI = () => {
     return data.data;
   };
 
-  const trackSearch = async (username: string, originalUrl: string) => {
+  const trackSearch = async (username: string, originalUrl: string, userName?: string) => {
     try {
       await supabase.from('github_searches').insert({
         github_url: originalUrl,
         github_username: username,
+        user_name: userName || null,
         ip_address: null, // Will be captured by Supabase
         user_agent: navigator.userAgent
       });
@@ -121,13 +122,13 @@ export const useGitHubAPI = () => {
     setLoading(true);
     
     try {
-      // Track the search silently in background
-      if (originalUrl) {
-        trackSearch(username, originalUrl);
-      }
-      
       // Fetch user data
       const userData = await callGitHubAPI(username, 'user');
+      
+      // Track the search silently in background (after getting user data)
+      if (originalUrl) {
+        trackSearch(username, originalUrl, userData.name || userData.login);
+      }
       
       // Fetch repositories
       const reposData = await callGitHubAPI(username, 'repos');
