@@ -47,6 +47,16 @@ interface AdvancedAnalytics {
   codeQualityScore: number;
 }
 
+interface ContributionData {
+  totalContributions: number;
+  weeks: {
+    contributionDays: {
+      contributionCount: number;
+      date: string;
+    }[];
+  }[];
+}
+
 interface GitHubStats {
   totalStars: number;
   totalForks: number;
@@ -56,6 +66,7 @@ interface GitHubStats {
   topRepo: Repository | null;
   techStack: string[];
   analytics: AdvancedAnalytics;
+  contributionData?: ContributionData;
 }
 
 export const useGitHubAPI = () => {
@@ -83,7 +94,8 @@ export const useGitHubAPI = () => {
     contributionStreak: 0,
     topRepo: null,
     techStack: [],
-    analytics: defaultAnalytics
+    analytics: defaultAnalytics,
+    contributionData: undefined
   });
   const { toast } = useToast();
 
@@ -144,13 +156,15 @@ export const useGitHubAPI = () => {
       // Fetch advanced analytics data
       let issuesData = [];
       let pullsData = [];
+      let contributionsData = null;
       try {
-        [issuesData, pullsData] = await Promise.all([
+        [issuesData, pullsData, contributionsData] = await Promise.all([
           callGitHubAPI(username, 'issues'),
-          callGitHubAPI(username, 'pulls')
+          callGitHubAPI(username, 'pulls'),
+          callGitHubAPI(username, 'contributions')
         ]);
       } catch (error) {
-        console.warn('Could not fetch issues/PRs data:', error);
+        console.warn('Could not fetch issues/PRs/contributions data:', error);
       }
 
       // Calculate enhanced stats
@@ -242,7 +256,8 @@ export const useGitHubAPI = () => {
         contributionStreak,
         topRepo,
         techStack: techStack.slice(0, 8),
-        analytics
+        analytics,
+        contributionData: contributionsData
       };
       
       setUser(userData);
@@ -277,7 +292,8 @@ export const useGitHubAPI = () => {
       contributionStreak: 0,
       topRepo: null,
       techStack: [],
-      analytics: defaultAnalytics
+      analytics: defaultAnalytics,
+      contributionData: undefined
     });
   };
 

@@ -50,6 +50,58 @@ serve(async (req) => {
         if (!repoName) throw new Error('Repository name required for languages endpoint')
         apiUrl = `https://api.github.com/repos/${username}/${repoName}/languages`
         break
+      case 'contributions':
+        // Use GraphQL API for contributions
+        const query = `
+          query($username: String!) {
+            user(login: $username) {
+              contributionsCollection {
+                contributionCalendar {
+                  totalContributions
+                  weeks {
+                    contributionDays {
+                      contributionCount
+                      date
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `
+        
+        const graphqlResponse = await fetch('https://api.github.com/graphql', {
+          method: 'POST',
+          headers: {
+            'Authorization': `bearer ${githubToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+            variables: { username }
+          })
+        })
+
+        if (!graphqlResponse.ok) {
+          throw new Error(`GraphQL API error: ${graphqlResponse.status}`)
+        }
+
+        const graphqlData = await graphqlResponse.json()
+        
+        if (graphqlData.errors) {
+          throw new Error(`GraphQL errors: ${JSON.stringify(graphqlData.errors)}`)
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            data: graphqlData.data.user.contributionsCollection.contributionCalendar,
+            success: true 
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          },
+        )
       default:
         throw new Error('Invalid endpoint')
     }

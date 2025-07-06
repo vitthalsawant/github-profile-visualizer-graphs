@@ -11,13 +11,47 @@ interface ContributionDay {
 
 interface ContributionHeatmapProps {
   totalContributions: number;
-  contributionData?: ContributionDay[];
+  contributionData?: {
+    totalContributions: number;
+    weeks: {
+      contributionDays: {
+        contributionCount: number;
+        date: string;
+      }[];
+    }[];
+  };
 }
 
 export const ContributionHeatmap = ({ 
   totalContributions, 
-  contributionData = [] 
+  contributionData 
 }: ContributionHeatmapProps) => {
+  
+  const transformGitHubData = (githubData: any): ContributionDay[] => {
+    if (!githubData?.weeks) return [];
+    
+    const data: ContributionDay[] = [];
+    
+    githubData.weeks.forEach((week: any) => {
+      week.contributionDays.forEach((day: any) => {
+        const count = day.contributionCount;
+        let level = 0;
+        if (count === 0) level = 0;
+        else if (count <= 2) level = 1;
+        else if (count <= 4) level = 2;
+        else if (count <= 8) level = 3;
+        else level = 4;
+        
+        data.push({
+          date: day.date,
+          count: count,
+          level: level
+        });
+      });
+    });
+    
+    return data;
+  };
   
   const generateGitHubStyleData = (): ContributionDay[] => {
     const data: ContributionDay[] = [];
@@ -70,7 +104,7 @@ export const ContributionHeatmap = ({
     return data;
   };
 
-  const data = contributionData.length > 0 ? contributionData : generateGitHubStyleData();
+  const data = contributionData ? transformGitHubData(contributionData) : generateGitHubStyleData();
   
   const getIntensityColor = (level: number): string => {
     const colors = [

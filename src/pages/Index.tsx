@@ -36,7 +36,10 @@ const Index = () => {
             </div>
             
             <ProfileSummary user={user} stats={stats} />
-            <ContributionHeatmap totalContributions={stats.analytics.commitFrequency * 10 + stats.totalStars} />
+            <ContributionHeatmap 
+              totalContributions={stats.contributionData?.totalContributions || stats.analytics.commitFrequency * 10 + stats.totalStars}
+              contributionData={stats.contributionData}
+            />
             <AdvancedAnalytics analytics={stats.analytics} />
             <RepositoryList repositories={repositories} />
           </div>
